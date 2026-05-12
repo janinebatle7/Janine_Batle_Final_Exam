@@ -1,0 +1,28 @@
+{
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "ejs": "^5.0.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.22.3"
+  },
+  "name": "eljie_peteros_final_exam",
+  "version": "1.0.0",
+  "description": "",
+  "main": "crud_final_exam.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eljiejapson-del/Eljie_Peteros_Final_Exam.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/eljiejapson-del/Eljie_Peteros_Final_Exam/issues"
+  },
+  "homepage": "https://github.com/eljiejapson-del/Eljie_Peteros_Final_Exam#readme"
+}
