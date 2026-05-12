@@ -22,7 +22,7 @@ const db = mysql.createConnection({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 16573, // Default Aiven MySQL port
+    port: process.env.DB_PORT || 12590, // Default Aiven MySQL port
     ssl: {
         // Change to false to avoid local CA certificate errors
         rejectUnauthorized: false 
