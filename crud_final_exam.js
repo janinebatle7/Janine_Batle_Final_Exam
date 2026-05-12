@@ -15,11 +15,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Database Connection using Environment Variable from Render/Aiven
-// Use createPool for better stability in a cloud environment
-const db = mysql.createPool(process.env.DATABASE_URL);
+// --- Database Connection Logic ---
 
-// Test Connection
+// Safety Check: Ensure the Environment Variable is actually loaded
+const dbUrl = process.env.DATABASE_URL;
+
+if (!dbUrl) {
+    console.error("FATAL ERROR: DATABASE_URL is undefined.");
+    console.error("Please check Render -> Environment -> DATABASE_URL.");
+}
+
+// Initialize the Pool
+const db = mysql.createPool(dbUrl || ""); 
+
+// Test Connection and log status
 db.getConnection((err, connection) => {
     if (err) {
         console.error("Database connection failed: " + err.message);
@@ -39,7 +48,7 @@ app.get('/', (req, res) => {
             console.error(err);
             return res.status(500).send("Error fetching students");
         }
-        res.render('index', { students: results });
+        res.render('index', { students: results || [] });
     });
 });
 
