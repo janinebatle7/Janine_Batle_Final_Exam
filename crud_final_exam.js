@@ -16,100 +16,73 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // --- Database Connection Logic ---
-
-// Safety Check: Ensure the Environment Variable is actually loaded
 const dbUrl = process.env.DATABASE_URL;
 
-if (!dbUrl) {
-    console.error("FATAL ERROR: DATABASE_URL is undefined.");
-    console.error("Please check Render -> Environment -> DATABASE_URL.");
+// Validation: If URL is missing or has placeholder text, stop the app immediately
+if (!dbUrl || dbUrl.includes("CLICK_TO_REVEAL_PASSWORD") || dbUrl === "") {
+    console.error("**************************************************");
+    console.error("FATAL ERROR: DATABASE_URL is invalid or missing!");
+    console.error("Make sure you revealed the password in Aiven before copying.");
+    console.error("**************************************************");
+    process.exit(1); 
 }
 
 // Initialize the Pool
-const db = mysql.createPool(dbUrl || ""); 
+const db = mysql.createPool(dbUrl); 
 
-// Test Connection and log status
+// Test Connection
 db.getConnection((err, connection) => {
     if (err) {
         console.error("Database connection failed: " + err.message);
     } else {
-        console.log("Connected to Aiven MySQL Cloud Database.");
+        console.log("SUCCESS: Connected to Aiven MySQL Cloud Database.");
         connection.release();
     }
 });
 
 // --- CRUD Routes ---
 
-// 1. READ: Display all students on the homepage
 app.get('/', (req, res) => {
-    const sql = 'SELECT * FROM students';
-    db.query(sql, (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Error fetching students");
-        }
+    db.query('SELECT * FROM students', (err, results) => {
+        if (err) return res.status(500).send("Error fetching students");
         res.render('index', { students: results || [] });
     });
 });
 
-// 2. CREATE: Show the registration form
-app.get('/add', (req, res) => {
-    res.render('add');
-});
+app.get('/add', (req, res) => res.render('add'));
 
-// 3. CREATE: Handle form submission
 app.post('/add', (req, res) => {
     const { student_id, full_name, course, year_level, email } = req.body;
     const sql = 'INSERT INTO students (student_id, full_name, course, year_level, email) VALUES (?, ?, ?, ?, ?)';
-    
     db.query(sql, [student_id, full_name, course, year_level, email], (err) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Error saving student");
-        }
+        if (err) return res.status(500).send("Error saving student");
         res.redirect('/');
     });
 });
 
-// 4. UPDATE: Show the edit form with existing data
 app.get('/edit/:id', (req, res) => {
-    const sql = 'SELECT * FROM students WHERE id = ?';
-    db.query(sql, [req.params.id], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Error fetching student details");
-        }
+    db.query('SELECT * FROM students WHERE id = ?', [req.params.id], (err, result) => {
+        if (err) return res.status(500).send("Error fetching student");
         res.render('edit', { student: result[0] });
     });
 });
 
-// 5. UPDATE: Handle the update request
 app.post('/update/:id', (req, res) => {
     const { student_id, full_name, course, year_level, email } = req.body;
     const sql = 'UPDATE students SET student_id=?, full_name=?, course=?, year_level=?, email=? WHERE id=?';
-    
     db.query(sql, [student_id, full_name, course, year_level, email, req.params.id], (err) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Error updating student");
-        }
+        if (err) return res.status(500).send("Error updating student");
         res.redirect('/');
     });
 });
 
-// 6. DELETE: Remove a student record
 app.get('/delete/:id', (req, res) => {
-    const sql = 'DELETE FROM students WHERE id = ?';
-    db.query(sql, [req.params.id], (err) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Error deleting student");
-        }
+    db.query('DELETE FROM students WHERE id = ?', [req.params.id], (err) => {
+        if (err) return res.status(500).send("Error deleting student");
         res.redirect('/');
     });
 });
 
-// Start Server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
