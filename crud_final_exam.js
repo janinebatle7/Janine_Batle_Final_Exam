@@ -6,49 +6,101 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Set EJS as the template engine
 app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-// Database Connection using Environment Variable
-const db = mysql.createConnection(process.env.DATABASE_URL);
+// Database Connection using Environment Variable from Render/Aiven
+// Use createPool for better stability in a cloud environment
+const db = mysql.createPool(process.env.DATABASE_URL);
 
-db.connect(err => {
-    if (err) console.error("Database connection failed: " + err.stack);
-    else console.log("Connected to Aiven MySQL.");
+// Test Connection
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error("Database connection failed: " + err.message);
+    } else {
+        console.log("Connected to Aiven MySQL Cloud Database.");
+        connection.release();
+    }
 });
 
-// CRUD Routes
+// --- CRUD Routes ---
+
+// 1. READ: Display all students on the homepage
 app.get('/', (req, res) => {
-    db.query('SELECT * FROM students', (err, results) => {
+    const sql = 'SELECT * FROM students';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Error fetching students");
+        }
         res.render('index', { students: results });
     });
 });
 
-app.get('/add', (req, res) => res.render('add'));
+// 2. CREATE: Show the registration form
+app.get('/add', (req, res) => {
+    res.render('add');
+});
 
+// 3. CREATE: Handle form submission
 app.post('/add', (req, res) => {
     const { student_id, full_name, course, year_level, email } = req.body;
-    db.query('INSERT INTO students SET ?', { student_id, full_name, course, year_level, email }, () => {
+    const sql = 'INSERT INTO students (student_id, full_name, course, year_level, email) VALUES (?, ?, ?, ?, ?)';
+    
+    db.query(sql, [student_id, full_name, course, year_level, email], (err) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Error saving student");
+        }
         res.redirect('/');
     });
 });
 
+// 4. UPDATE: Show the edit form with existing data
 app.get('/edit/:id', (req, res) => {
-    db.query('SELECT * FROM students WHERE id = ?', [req.params.id], (err, result) => {
+    const sql = 'SELECT * FROM students WHERE id = ?';
+    db.query(sql, [req.params.id], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Error fetching student details");
+        }
         res.render('edit', { student: result[0] });
     });
 });
 
+// 5. UPDATE: Handle the update request
 app.post('/update/:id', (req, res) => {
-    db.query('UPDATE students SET ? WHERE id = ?', [req.body, req.params.id], () => {
+    const { student_id, full_name, course, year_level, email } = req.body;
+    const sql = 'UPDATE students SET student_id=?, full_name=?, course=?, year_level=?, email=? WHERE id=?';
+    
+    db.query(sql, [student_id, full_name, course, year_level, email, req.params.id], (err) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Error updating student");
+        }
         res.redirect('/');
     });
 });
 
+// 6. DELETE: Remove a student record
 app.get('/delete/:id', (req, res) => {
-    db.query('DELETE FROM students WHERE id = ?', [req.params.id], () => {
+    const sql = 'DELETE FROM students WHERE id = ?';
+    db.query(sql, [req.params.id], (err) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Error deleting student");
+        }
         res.redirect('/');
     });
 });
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
+// Start Server
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
