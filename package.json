@@ -5,7 +5,7 @@
     "express": "^5.2.1",
     "mysql2": "^3.22.3"
   },
-  "name": "eljie_peteros_final_exam",
+  "name": "janine_batle_final_exam",
   "version": "1.0.0",
   "description": "",
   "main": "crud_final_exam.js",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eljiejapson-del/Eljie_Peteros_Final_Exam.git"
+    "url": "git+https://github.com/eljiejapson-del/Janine_Batle_Final_Exam.git"
   },
   "keywords": [],
   "author": "",
